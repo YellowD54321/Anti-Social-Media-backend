@@ -1,0 +1,19 @@
+version: '3.8'
+
+networks:
+  lambda-local-net:
+    driver: bridge
+    name: 'lambda-local-net'
+
+services:
+  database:
+    container_name: qit-ddb-local
+    image: amazon/dynamodb-local:latest
+    ports:
+      - '8100:8000'
+    volumes:
+      - ./dynamodb_data:/home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+    command: '-jar DynamoDBLocal.jar -sharedDb -dbPath data'
+    networks:
+      - lambda-local-net

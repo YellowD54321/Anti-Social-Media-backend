@@ -4,19 +4,57 @@ Description: >
   anti-social-media-backend
 
   Sample SAM Template for anti-social-media-backend
-  
+
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 3
 
 Resources:
+  QitClickTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: qit-db-local
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: createDateTime
+          AttributeType: S
+        - AttributeName: dateKey
+          AttributeType: S
+        - AttributeName: recordSort
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: createDateTime
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: DateIndex
+          KeySchema:
+            - AttributeName: dateKey
+              KeyType: HASH
+            - AttributeName: recordSort
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
       Architectures:
         - x86_64
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: !Ref QitClickTable
+          DYNAMODB_ENDPOINT: http://qit-ddb-local:8000
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QitClickTable
       Events:
         HelloWorld:
           Type: Api
@@ -33,11 +71,11 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+    Description: 'API Gateway endpoint URL for Prod stage for Hello World function'
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/'
   HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
+    Description: 'Hello World Lambda Function ARN'
     Value: !GetAtt HelloWorldFunction.Arn
   HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
+    Description: 'Implicit IAM Role created for Hello World function'
     Value: !GetAtt HelloWorldFunctionRole.Arn
