@@ -50,8 +50,9 @@ Resources:
         - x86_64
       Environment:
         Variables:
-          DYNAMODB_TABLE: !Ref QitClickTable
+          DYNAMODB_TABLE: qit-db-local
           DYNAMODB_ENDPOINT: http://qit-ddb-local:8000
+          AWS_REGION: us-east-1
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref QitClickTable
@@ -61,6 +62,37 @@ Resources:
           Properties:
             Path: /hello
             Method: get
+      ImageConfig:
+        Command:
+          - app.lambdaHandler
+    Metadata:
+      DockerTag: nodejs22.x-v1
+      DockerContext: ./hello-world
+      Dockerfile: Dockerfile
+
+  QuitItTodayFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: qit-db-local
+          DYNAMODB_ENDPOINT: http://qit-ddb-local:8000
+          AWS_REGION: us-east-1
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QitClickTable
+      Events:
+        QuitItToday:
+          Type: Api
+          Properties:
+            Path: /quitItToday
+            Method: post
+      ImageConfig:
+        Command:
+          - quit-it-today.lambdaHandler
     Metadata:
       DockerTag: nodejs22.x-v1
       DockerContext: ./hello-world
@@ -79,3 +111,12 @@ Outputs:
   HelloWorldFunctionIamRole:
     Description: 'Implicit IAM Role created for Hello World function'
     Value: !GetAtt HelloWorldFunctionRole.Arn
+  QuitItTodayApi:
+    Description: 'API Gateway endpoint URL for Prod stage for QuitItToday function'
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/quitItToday/'
+  QuitItTodayFunction:
+    Description: 'QuitItToday Lambda Function ARN'
+    Value: !GetAtt QuitItTodayFunction.Arn
+  QuitItTodayFunctionIamRole:
+    Description: 'Implicit IAM Role created for QuitItToday function'
+    Value: !GetAtt QuitItTodayFunctionRole.Arn

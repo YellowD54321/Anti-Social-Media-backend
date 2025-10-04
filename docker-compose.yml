@@ -1,9 +1,9 @@
 version: '3.8'
 
 networks:
-  lambda-local-net:
+  qit-lambda-local-net:
     driver: bridge
-    name: 'lambda-local-net'
+    name: 'qit-lambda-local-net'
 
 services:
   database:
@@ -16,4 +16,4 @@ services:
     working_dir: /home/dynamodblocal
     command: '-jar DynamoDBLocal.jar -sharedDb -dbPath data'
     networks:
-      - lambda-local-net
+      - qit-lambda-local-net

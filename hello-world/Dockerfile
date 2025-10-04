@@ -1,6 +1,7 @@
 FROM public.ecr.aws/lambda/nodejs:22
 
-COPY app.mjs package*.json ./
+# 複製所有 Lambda function 檔案和 package.json
+COPY *.mjs package*.json ./
 
 RUN npm install
 # If you are building your code for production, instead include a package-lock.json file on this directory and use:
