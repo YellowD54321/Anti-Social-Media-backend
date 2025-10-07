@@ -20,6 +20,30 @@ const docClient = DynamoDBDocumentClient.from(client);
 const TABLE_NAME = process.env.DYNAMODB_TABLE || 'qit-db-local';
 
 /**
+ * 增加總點擊次數
+ * @returns {Promise<void>}
+ */
+async function incrementTotalClicks() {
+  try {
+    await docClient.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: {
+        userId: 'STAT#TOTAL',
+        createDateTime: 'METADATA'
+      },
+      UpdateExpression: 'ADD totalClicks :inc',
+      ExpressionAttributeValues: {
+        ':inc': 1
+      },
+      ReturnValues: 'ALL_NEW'
+    }));
+  } catch (error) {
+    console.error('更新總點擊次數失敗:', error);
+    throw error;
+  }
+}
+
+/**
  * 記錄使用者點擊
  * @param {string} userId - 使用者 ID
  * @returns {Promise<Object>} 點擊記錄結果
@@ -41,25 +65,11 @@ async function recordUserClick(userId) {
       }
     }));
 
-    const updateResult = await docClient.send(new UpdateCommand({
-      TableName: TABLE_NAME,
-      Key: {
-        userId: 'STAT#TOTAL',
-        createDateTime: 'METADATA'
-      },
-      UpdateExpression: 'ADD totalClicks :inc',
-      ExpressionAttributeValues: {
-        ':inc': 1
-      },
-      ReturnValues: 'ALL_NEW'
-    }));
-
     return {
       success: true,
       userId,
       createDateTime,
       date,
-      totalClicks: updateResult.Attributes.totalClicks
     };
   } catch (error) {
     console.error('記錄點擊失敗:', error);
@@ -82,8 +92,9 @@ export const lambdaHandler = async (event) => {
     console.log('👤 userId:', userId);
     
     const result = await recordUserClick(userId);
-    
-    console.log('✅ 點擊記錄成功:', result);
+
+    // 更新總點擊次數
+    await incrementTotalClicks();
     
     return {
       statusCode: 200,
@@ -99,7 +110,6 @@ export const lambdaHandler = async (event) => {
         data: {
           userId: result.userId,
           createDateTime: result.createDateTime,
-          totalClicks: result.totalClicks
         }
       })
     };
